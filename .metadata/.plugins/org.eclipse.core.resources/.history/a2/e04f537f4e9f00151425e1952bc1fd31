@@ -1,0 +1,70 @@
+/*
+ * jazda.h
+ *
+ *  Created on: Dec 4, 2015
+ *      Author: Marek
+ */
+
+#ifndef JAZDA_H_
+#define JAZDA_H_
+
+#define XMAZE 18
+#define YMAZE 18 // Rozmiar labiryntu + 2
+#define ORI_START 3
+#define VEL 0
+#define VELR 600
+#define TARGET_1 8
+#define TARGET_2 9
+
+#include "stm32f1xx_hal.h"
+
+volatile uint16_t adcData[6];
+extern uint32_t adctmp[6];
+extern int32_t SensorTab[6];
+uint16_t dysl,dysr;
+extern uint8_t counter;
+extern uint8_t count;
+uint32_t test, test2;
+uint16_t MinMax[6][2];
+uint16_t Max3[6];
+uint16_t Min3[6];
+extern int k;
+extern int l;
+extern uint8_t start;
+
+
+extern int8_t x,y;
+extern int8_t i,j;
+extern int8_t ori;
+extern int8_t state;
+extern int8_t cell[XMAZE][YMAZE];
+extern int8_t walls[XMAZE][YMAZE];
+extern int8_t target[2];
+extern int8_t path[256];
+
+
+
+int32_t error[2];
+
+
+#define DISTANCE 2400 // rozmiar komórki
+#define SR_Tresh 1000
+#define SL_Tresh 1000
+#define SF_Tresh 800
+
+void rotary_left(int);
+void rotary_right(int);
+void rotary(int);
+void drive(int);
+
+int istarget(int , int );
+void findPath();
+void readPath();
+void set();
+void rstdrive();
+void mapCell();
+int8_t highestNeighbourCell(int , int );
+int8_t lowestNeighbourCell(int , int );
+void flood();
+
+#endif /* JAZDA_H_ */

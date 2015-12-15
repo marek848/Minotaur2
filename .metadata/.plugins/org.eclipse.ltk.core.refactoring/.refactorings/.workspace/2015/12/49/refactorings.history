@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Delete resource &apos;Minotaur Configuration/imu&apos;" deleteContents="false" description="Delete resource &apos;Minotaur Configuration/imu&apos;" element1="/Minotaur Configuration/imu" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1449268213988"/>
+</session>

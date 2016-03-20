@@ -4,7 +4,7 @@
   * Description        : Main program body
   ******************************************************************************
   *
-  * COPYRIGHT(c) 2015 STMicroelectronics
+  * COPYRIGHT(c) 2016 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -32,10 +32,9 @@
   */
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_hal.h"
-#include "jazda.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "jazda.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -82,14 +81,19 @@ static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN 0 */
 
 //uint16_t adcData[6];
-uint32_t adctmp[6]={0,0,0,0,0,0};
-int32_t SensorTab[6]={0,0,0,0,0,0};
-uint16_t dys0[6]={0,0,0,0,0,0};
+volatile uint32_t adctmp[6]={0,0,0,0,0,0};
+volatile int32_t SensorTab[6][5];
+volatile uint16_t dys0[6]={0,0,0,0,0,0};
 uint8_t counter=0;
-uint8_t count=0;
+volatile int32_t lin_vel=0,rot_vel;
+int8_t map=0;
 uint8_t start=0;
-int32_t angle=0;
+volatile int32_t angle=0,distance=0;
+int32_t dryf=0;
+int32_t speed[2];
+int8_t indexer=0;
 
+int8_t tryb=0;
 int8_t x=1;
 int8_t y=1;
 int8_t i,j;
@@ -100,7 +104,8 @@ int8_t walls[XMAZE][YMAZE];
 int8_t target[2]={TARGET_1,TARGET_2};
 int8_t path[256];
 
-uint8_t WAI=0;
+uint8_t change_wall;
+
 int16_t X=0,Y=0,Z=0;
 
 /* USER CODE END 0 */
@@ -167,39 +172,29 @@ int main(void)
 	  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,0);
 	  HAL_Delay(500);
   }
-  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,0);
-  HAL_Delay(1000);
-  for(i1=0;i1<6;i1++) dys0[i1]=SensorTab[i1];
-//
-  Send_Gyro(0x20,0x4F);
-  Send_Gyro(0x21,0x00);
-  Send_Gyro(0x22,0x00);
-  Send_Gyro(0x23,0x10);
-  Send_Gyro(0x24,0x00);
 
-  WAI=Read_Gyro(0x0F);
+  calibration();
 
   while (1)
   {
+	  if (istarget(x,y)==1) rstdrive();
+	  if (walls[x][y]==-1)
+	  {
+	 	 mapCell();
+//	 	 map=walls[x][y];
+	 	HAL_TIM_Base_Stop_IT(&htim4);
 
-	  rotary_left(400);
-	  HAL_Delay(1000);
-//	  if (istarget(x,y)==1) rstdrive();
-//	  if (walls[x][y]==-1)
-//	  {
-//	 	 mapCell();
-//	 	 flood();
-//	 	 findPath();
-//	  }
-//	  readPath();
-//	  set();
-//	  HAL_Delay(100);
-//	  drive(VEL);
-//	  HAL_Delay(100);
+	 	 flood();
+	 	 findPath();
+	  }
+	  readPath();
 
-//	  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,0);
-//	  drive(VELR);
-//	  HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,0);
+	  HAL_TIM_Base_Start_IT(&htim4);
+//	  if(state!=ori) HAL_Delay(100);
+//	  HAL_Delay(200);
+	  set();
+	  drive(VEL);
+////	  HAL_Delay(1000);
 
   /* USER CODE END WHILE */
 
@@ -262,14 +257,14 @@ void MX_ADC1_Init(void)
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 6;
+  hadc1.Init.NbrOfConversion = 8;
   HAL_ADC_Init(&hadc1);
 
     /**Configure Regular Channel 
     */
   sConfig.Channel = ADC_CHANNEL_11;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_7CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_41CYCLES_5;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
     /**Configure Regular Channel 
@@ -302,21 +297,34 @@ void MX_ADC1_Init(void)
   sConfig.Rank = 6;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
+    /**Configure Regular Channel 
+    */
+  sConfig.Channel = ADC_CHANNEL_14;
+  sConfig.Rank = 7;
+  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+
+    /**Configure Regular Channel 
+    */
+  sConfig.Channel = ADC_CHANNEL_15;
+  sConfig.Rank = 8;
+  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+
 }
 
 /* I2C1 init function */
 void MX_I2C1_Init(void)
 {
-	hi2c1.Instance = I2C1;
-	hi2c1.Init.ClockSpeed = 100000;
-	hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-	hi2c1.Init.OwnAddress1 = 0;
-	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-	hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLED;
-	hi2c1.Init.OwnAddress2 = 0;
-	hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLED;
-	hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLED;
-	HAL_I2C_Init(&hi2c1);
+
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLED;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLED;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLED;
+  HAL_I2C_Init(&hi2c1);
 
 }
 
@@ -426,15 +434,15 @@ void MX_TIM2_Init(void)
 
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_DOWN;
-  htim2.Init.Period = 65535;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 32767;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
   sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
   sConfig.IC1Filter = 0;
-  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
   sConfig.IC2Filter = 0;
@@ -455,15 +463,15 @@ void MX_TIM3_Init(void)
 
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
-  htim3.Init.CounterMode = TIM_COUNTERMODE_DOWN;
-  htim3.Init.Period = 65535;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 32767;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
   sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
   sConfig.IC1Filter = 0;
-  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_FALLING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
   sConfig.IC2Filter = 0;

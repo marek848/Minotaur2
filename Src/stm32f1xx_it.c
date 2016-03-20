@@ -4,7 +4,7 @@
   * @brief   Interrupt Service Routines.
   ******************************************************************************
   *
-  * COPYRIGHT(c) 2015 STMicroelectronics
+  * COPYRIGHT(c) 2016 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -77,7 +77,7 @@ void DMA1_Channel1_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
 	uint8_t i;
-	counter++;
+//	counter++;
 
 		for(i=0;i<6;i++)
 		{
@@ -99,64 +99,98 @@ void DMA1_Channel1_IRQHandler(void)
 void TIM4_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM4_IRQn 0 */
-	int32_t rate=0,prev_rate=0;
-	uint8_t i,j;
-	static uint32_t adcavg[6][5];
-	uint32_t tmp;
+	static uint8_t count=0;
+	static int32_t rate[3]={0,0,0},prev_rate=0,tmp_rate[2],prev_vel=0;
+
 	count++;
+	indexer=count%5;
 	if(count%2==0)
+		{
+			HAL_GPIO_WritePin(Sensor2_GPIO_Port,Sensor2_Pin,0);
+			HAL_GPIO_WritePin(Sensor1_GPIO_Port,Sensor1_Pin,1);
+//			HAL_GPIO_WritePin(Sensor3_GPIO_Port,Sensor3_Pin,1);
+
+			for(i=0;i<6;i++)
+			{
+				if(i==1||i==2||i==5) MinMax[i][0]=Max3[i];
+				if(i==0||i==3||i==4) MinMax[i][1]=Min3[i];
+				SensorTab[i][indexer]=(MinMax[i][0]-MinMax[i][1])/10;
+				Min3[i]=4000;
+				Max3[i]=0;
+			}
+		}
+		else
+		{
+			HAL_GPIO_WritePin(Sensor1_GPIO_Port,Sensor1_Pin,0);
+			HAL_GPIO_WritePin(Sensor2_GPIO_Port,Sensor2_Pin,1);
+//			HAL_GPIO_WritePin(Sensor3_GPIO_Port,Sensor3_Pin,0);
+
+			for(i=0;i<6;i++)
+			{
+				if(i==0||i==3||i==4) MinMax[i][0]=Max3[i];
+				if(i==1||i==2||i==5) MinMax[i][1]=Min3[i];
+				SensorTab[i][indexer]=(MinMax[i][0]-MinMax[i][1])/10;
+				Min3[i]=4000;
+				Max3[i]=0;
+			}
+		}
+	test3[0]=SensorTab[4][indexer];
+
+	/******************************************* Measurement rotational speed ***********************************/
+	if(count%4==3)
 	{
-		HAL_GPIO_WritePin(Sensor2_GPIO_Port,Sensor2_Pin,0);
-		HAL_GPIO_WritePin(Sensor1_GPIO_Port,Sensor1_Pin,1);
-
-		for(i=0;i<6;i++)
-		{
-			if(i==1||i==2||i==5) MinMax[i][0]=Max3[i];
-			if(i==0||i==3||i==4) MinMax[i][1]=Min3[i];
-			Min3[i]=4000;
-			Max3[i]=0;
-		}
+		tmp_rate[0]=TIM2->CNT;
+		tmp_rate[1]=TIM3->CNT;
+		rate[0]=( tmp_rate[0]-tmp_rate[1] )*16; //64/4
+		lin_vel=((tmp_rate[1]-16384)+(tmp_rate[0]-16384))*8;// 17/2
+		TIM3->CNT=16384;
+		TIM2->CNT=16384;
 	}
-	else
+	rate[1]=((Read_AXIS(0x2C)-dryf)*175)/10000;
+	rot_vel=(rate[1]+rate[1])/2;
+	angle +=(prev_rate + rot_vel)/2;
+	distance +=(prev_vel + lin_vel)/2; // [um]
+
+	prev_rate = rot_vel;
+	prev_vel = lin_vel;
+
+	test3[4]=test3[1]-angle;
+	if ((test3[4]<2000 && test3[4]>0)||(test3[4]>-2000 && test3[4]<0)) test3[2]++;
+
+	/******************************************* Drive straight ***********************************/
+	if(tryb==1)
 	{
-		HAL_GPIO_WritePin(Sensor1_GPIO_Port,Sensor1_Pin,0);
-		HAL_GPIO_WritePin(Sensor2_GPIO_Port,Sensor2_Pin,1);
-
-		for(i=0;i<6;i++)
+		if (SensorTab[2][indexer]-dys0[2]<50)
 		{
-			if(i==0||i==3||i==4) MinMax[i][0]=Max3[i];
-			if(i==1||i==2||i==5) MinMax[i][1]=Min3[i];
-			Min3[i]=4000;
-			Max3[i]=0;
+			error=(SensorTab[0][indexer]-SensorTab[2][indexer])/2 - (SensorTab[2][indexer]-dys0[2]);
 		}
+		else if(SensorTab[3][indexer]-dys0[3]<50)
+		{
+			error= (SensorTab[3][indexer]-SensorTab[1][indexer])*3/4 + (SensorTab[3][indexer]-dys0[3]);
+		}
+		else error=-angle/100;
+
+		propocjonal=error*K_drive;
+
+		integral+=error*I_drive;
+		if (integral>1000) integral=100;
+		if (integral<-1000) integral=-100;
+
+		derivative=(error-(SensorTab[3][(indexer+1)%5]-SensorTab[1][(indexer+1)%5])*3/4 + (SensorTab[3][(indexer+1)%5]-dys0[3]))*D_drive;
+
+		regulator=propocjonal+integral+derivative;
+
+		speed[0]=VEL-regulator;
+		speed[1]=VEL+regulator;
+
+		if(speed[0]>999) speed[0]=999;
+		else if(speed[0]<0) speed[0]=0;
+		if(speed[1]>999) speed[1]=999;
+		else if(speed[1]<0) speed[1]=0;
+
+		TIM1->CCR1=speed[0];
+		TIM1->CCR2=speed[1];
 	}
-//	for(i=0;i<6;i++) SensorTab[i]=MinMax[i];
-	for(i=0;i<6;i++)
-	{
-		for(j=4;j>0;j--)
-		{
-			adcavg[i][j]=adcavg[i][j-1];
-		}
-		adcavg[i][0]=MinMax[i][0]-MinMax[i][1];
-		tmp=0;
-		for(j=0;j<5;j++)
-		{
-			tmp+=adcavg[i][j];
-		}
-		SensorTab[i]=tmp/5-dys0[i];
-	}
-
-	error[0]=(SensorTab[0]-SensorTab[2])/2;
-	error[1]=(SensorTab[3]-SensorTab[1])/2;
-
-	// Gyro sensor
-	rate=(((int16_t)Read_AXIS(0x2C))*500)/32767;//100;
-	test3=rate;
-
-	angle +=(prev_rate + rate);
-
-	// remember the current speed for the next loop rate integration.
-	prev_rate = rate;
 
   /* USER CODE END TIM4_IRQn 0 */
   HAL_TIM_IRQHandler(&htim4);
@@ -171,9 +205,10 @@ void TIM4_IRQHandler(void)
 void EXTI15_10_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI15_10_IRQn 0 */
-	start=1;
+	if(start==1) start=0;
+	else start=1;
 
-	HAL_TIM_Base_Start_IT(&htim4);
+
   /* USER CODE END EXTI15_10_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */

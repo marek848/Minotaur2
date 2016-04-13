@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="OptionalMessageDialog.hide.">
+		<item value="0" key="askReindex.detail"/>
+	</section>
+	<section name="completion_proposal_size">
+	</section>
+	<section name="PDOMSearchPage">
+		<item value="227191" key="searchFlags"/>
+		<item value="false" key="caseSensitive"/>
+		<list key="previousPatterns">
+			<item value="hdma_usart3_tx"/>
+			<item value="hal_dma"/>
+			<item value="adctmp"/>
+			<item value="speed"/>
+			<item value="sensortab"/>
+			<item value="test30"/>
+			<item value="start"/>
+			<item value="test"/>
+			<item value="distance"/>
+			<item value="dys0"/>
+			<item value="count"/>
+			<item value="rate"/>
+			<item value="angle"/>
+			<item value="angel"/>
+			<item value="test2"/>
+			<item value="test3"/>
+		</list>
+	</section>
+	<section name="org.eclipse.cdt.internal.ui.text.QuickOutline">
+		<item value="637" key="org.eclipse.cdt.internal.ui.text.COutlineInformationControlDIALOG_X_ORIGIN"/>
+		<item value="300" key="org.eclipse.cdt.internal.ui.text.COutlineInformationControlDIALOG_HEIGHT"/>
+		<item value="280" key="org.eclipse.cdt.internal.ui.text.COutlineInformationControlDIALOG_Y_ORIGIN"/>
+		<item value="true" key="org.eclipse.cdt.internal.ui.text.COutlineInformationControlDIALOG_USE_PERSISTED_SIZE"/>
+		<item value="350" key="org.eclipse.cdt.internal.ui.text.COutlineInformationControlDIALOG_WIDTH"/>
+		<item value="true" key="org.eclipse.cdt.internal.ui.text.COutlineInformationControlDIALOG_USE_PERSISTED_LOCATION"/>
+	</section>
+	<section name="RenameInformationPopup">
+	</section>
+	<section name="org.eclipse.cdt.ui.text.hover.CMacroExpansionExploration.internal">
+		<item value="465" key="size.width"/>
+		<item value="180" key="size.height"/>
+	</section>
+	<section name="CRenameRefactoringInputPage">
+	</section>
+	<section name="org.eclipse.cdt.ui.text.hover.CMacroExpansionExploration">
+	</section>
+</section>

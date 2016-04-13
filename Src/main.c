@@ -35,6 +35,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "jazda.h"
+
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -53,6 +54,8 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 
 UART_HandleTypeDef huart3;
+DMA_HandleTypeDef hdma_usart3_tx;
+DMA_HandleTypeDef hdma_usart3_rx;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -87,8 +90,8 @@ volatile uint16_t dys0[6]={0,0,0,0,0,0};
 uint8_t counter=0;
 volatile int32_t lin_vel=0,rot_vel;
 int8_t map=0;
-uint8_t start=0;
-volatile int32_t angle=0,distance=0;
+uint8_t Status=STOP_STATUS;
+volatile int32_t angle=0,distance=0,angle1=0;
 int32_t dryf=0;
 int32_t speed[2];
 int8_t indexer=0;
@@ -148,13 +151,18 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim2,TIM_CHANNEL_ALL);
   HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_2);
-  HAL_TIM_Base_Start(&htim4);
 
 
     // Start ADC DMA
   HAL_ADC_Start(&hadc1);
   HAL_ADCEx_Calibration_Start(&hadc1);
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&adcData, 6);
+
+  HAL_UART_MspInit(&huart3);
+
+  HAL_TIM_Base_Start(&htim4);
+
+  HAL_UART_Receive_DMA(&huart3,(uint8_t*)RxBuffer,1);
 
   int i1, j1;
   for(i1=0;i1<XMAZE;i1++)
@@ -165,7 +173,7 @@ int main(void)
       walls[i1][j1]=-1;
     }
   }
-  while(start==0)
+  while(Status==STOP_STATUS)
   {
 	  HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,1);
 	  HAL_Delay(500);
@@ -177,29 +185,29 @@ int main(void)
 
   while (1)
   {
-	  if (istarget(x,y)==1) rstdrive();
-	  if (walls[x][y]==-1)
+
+		  if (istarget(x,y)==1) rstdrive();
+  if(Status==DRIVE_STATUS)
 	  {
-	 	 mapCell();
-//	 	 map=walls[x][y];
-	 	HAL_TIM_Base_Stop_IT(&htim4);
+		  if (walls[x][y]==-1)
+		  {
+		 	 mapCell();
 
-	 	 flood();
-	 	 findPath();
+		 	 HAL_TIM_Base_Stop_IT(&htim4);
+
+		 	 flood();
+		 	 findPath();
+		  }
+		  readPath();
+
+		  HAL_TIM_Base_Start_IT(&htim4);
+		  set();
+		  drive(VEL);
+
 	  }
-	  readPath();
-
-	  HAL_TIM_Base_Start_IT(&htim4);
-//	  if(state!=ori) HAL_Delay(100);
-//	  HAL_Delay(200);
-	  set();
-	  drive(VEL);
-////	  HAL_Delay(1000);
-
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-
   }
   /* USER CODE END 3 */
 
@@ -257,7 +265,7 @@ void MX_ADC1_Init(void)
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 8;
+  hadc1.Init.NbrOfConversion = 6;
   HAL_ADC_Init(&hadc1);
 
     /**Configure Regular Channel 
@@ -295,18 +303,6 @@ void MX_ADC1_Init(void)
     */
   sConfig.Channel = ADC_CHANNEL_7;
   sConfig.Rank = 6;
-  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
-
-    /**Configure Regular Channel 
-    */
-  sConfig.Channel = ADC_CHANNEL_14;
-  sConfig.Rank = 7;
-  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
-
-    /**Configure Regular Channel 
-    */
-  sConfig.Channel = ADC_CHANNEL_15;
-  sConfig.Rank = 8;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 
 }
@@ -511,7 +507,7 @@ void MX_USART3_UART_Init(void)
 {
 
   huart3.Instance = USART3;
-  huart3.Init.BaudRate = 115200;
+  huart3.Init.BaudRate = 19200;
   huart3.Init.WordLength = UART_WORDLENGTH_8B;
   huart3.Init.StopBits = UART_STOPBITS_1;
   huart3.Init.Parity = UART_PARITY_NONE;
@@ -531,8 +527,12 @@ void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 2, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
 
 }
 

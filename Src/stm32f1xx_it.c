@@ -43,6 +43,9 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
 extern TIM_HandleTypeDef htim4;
+extern DMA_HandleTypeDef hdma_usart3_tx;
+extern DMA_HandleTypeDef hdma_usart3_rx;
+extern UART_HandleTypeDef huart3;
 
 /******************************************************************************/
 /*            Cortex-M3 Processor Interruption and Exception Handlers         */ 
@@ -54,7 +57,7 @@ extern TIM_HandleTypeDef htim4;
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-
+if(HAL_GetTick()%100==0 && Status!=STOP_STATUS && Transmit==1) HAL_UART_Transmit_DMA(&huart3,(uint8_t*)TxBuffer,34);
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   HAL_SYSTICK_IRQHandler();
@@ -91,6 +94,86 @@ void DMA1_Channel1_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
 
   /* USER CODE END DMA1_Channel1_IRQn 1 */
+}
+
+/**
+* @brief This function handles DMA1 channel2 global interrupt.
+*/
+void DMA1_Channel2_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel2_IRQn 0 */
+	int32_t pom;
+
+	TxBuffer[0]='#';
+	for (i=0;i<8;i++)
+	{
+		if (i<6) pom=SensorTab[i][indexer]-dys0[i];
+		if(i==6) pom=angle/1000;
+		if(i==7) pom=distance/1000;
+		if (pom>0)
+		{
+			TxBuffer[i*4+1]='+';
+			TxBuffer[i*4+2]=(uint8_t)( pom/100+48);
+			TxBuffer[i*4+3]=(uint8_t)((pom%100)/10+48);
+			TxBuffer[i*4+4]=(uint8_t)( pom%10+48);
+		}
+		else
+		{
+			TxBuffer[i*4+1]='-';
+			TxBuffer[i*4+2]=(uint8_t)( (  pom*(-1) )/100+48);
+			TxBuffer[i*4+3]=(uint8_t)( ( (pom*(-1) )%100)/10+48);
+			TxBuffer[i*4+4]=(uint8_t)( (  pom*(-1))%10+48);
+		}
+	}
+	TxBuffer[33]='~';
+  /* USER CODE END DMA1_Channel2_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart3_tx);
+  /* USER CODE BEGIN DMA1_Channel2_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel2_IRQn 1 */
+}
+
+/**
+* @brief This function handles DMA1 channel3 global interrupt.
+*/
+void DMA1_Channel3_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Channel3_IRQn 0 */
+	static int8_t tmp_tryb=-1;
+
+	if(RxBuffer[0]=='d')	//Drive
+	{
+		Status=DRIVE_STATUS;
+		Transmit=1;
+		tryb=tmp_tryb;
+		tmp_tryb=-1;
+	}
+	if(RxBuffer[0]=='p')	//Pause
+	{
+		Status=PAUSE_STATUS;
+		Transmit=1;
+		tmp_tryb=tryb;
+		tryb=0;
+		TIM1->CCR1=0;
+		TIM1->CCR2=0;
+	}
+	if(RxBuffer[0]=='r')	//Reset
+	{
+		NVIC_SystemReset();
+	}
+	if(RxBuffer[0]=='P')
+	{
+		tryb=1;
+		drive(VEL);
+		tryb=0;
+	}
+	if(RxBuffer[0]=='L') rotary(VELR,-95000);
+	if(RxBuffer[0]=='R') rotary(VELR,90000);
+  /* USER CODE END DMA1_Channel3_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart3_rx);
+  /* USER CODE BEGIN DMA1_Channel3_IRQn 1 */
+
+  /* USER CODE END DMA1_Channel3_IRQn 1 */
 }
 
 /**
@@ -134,41 +217,43 @@ void TIM4_IRQHandler(void)
 				Max3[i]=0;
 			}
 		}
-	test3[0]=SensorTab[4][indexer];
+
+	test3[0]=SensorTab[0][indexer];
 
 	/******************************************* Measurement rotational speed ***********************************/
 	if(count%4==3)
 	{
 		tmp_rate[0]=TIM2->CNT;
 		tmp_rate[1]=TIM3->CNT;
-		rate[0]=( tmp_rate[0]-tmp_rate[1] )*16; //64/4
+		rate[0]=( tmp_rate[0]-tmp_rate[1] )*13; //64/4
 		lin_vel=((tmp_rate[1]-16384)+(tmp_rate[0]-16384))*8;// 17/2
 		TIM3->CNT=16384;
 		TIM2->CNT=16384;
 	}
-	rate[1]=((Read_AXIS(0x2C)-dryf)*175)/10000;
+	rate[1]=((Read_AXIS(0x2C)-dryf)*700)/10000;
 	rot_vel=(rate[1]+rate[1])/2;
 	angle +=(prev_rate + rot_vel)/2;
+	angle1+=rate[0];
 	distance +=(prev_vel + lin_vel)/2; // [um]
 
 	prev_rate = rot_vel;
 	prev_vel = lin_vel;
 
 	test3[4]=test3[1]-angle;
-	if ((test3[4]<2000 && test3[4]>0)||(test3[4]>-2000 && test3[4]<0)) test3[2]++;
+	if ((test3[4]<1000 && test3[4]>0)||(test3[4]>-1000 && test3[4]<0)) test3[2]++;
 
 	/******************************************* Drive straight ***********************************/
 	if(tryb==1)
 	{
-		if (SensorTab[2][indexer]-dys0[2]<50)
+		if (SensorTab[2][indexer]-dys0[2]>SSL_Tresh && SensorTab[0][indexer]-dys0[0] >SSL_Tresh && abs(SensorTab[2][indexer]-dys0[2]-(SensorTab[0][indexer]-dys0[0]))<50)
 		{
-			error=(SensorTab[0][indexer]-SensorTab[2][indexer])/2 - (SensorTab[2][indexer]-dys0[2]);
+			error=(SensorTab[0][indexer]-dys0[0]-(SensorTab[2][indexer]-dys0[2]))*3/4 - (SensorTab[2][indexer]-dys0[2])*5/4-angle1/140;
 		}
-		else if(SensorTab[3][indexer]-dys0[3]<50)
+		else if(SensorTab[3][indexer]-dys0[3]>SSR_Tresh && SensorTab[1][indexer]-dys0[1]>SSR_Tresh && abs(SensorTab[3][indexer]-dys0[3]-(SensorTab[1][indexer]-dys0[1]))<50)
 		{
-			error= (SensorTab[3][indexer]-SensorTab[1][indexer])*3/4 + (SensorTab[3][indexer]-dys0[3]);
+			error= (SensorTab[3][indexer]-dys0[3]-(SensorTab[1][indexer]-dys0[1]))*1 + (SensorTab[3][indexer]-dys0[3])*5/4-angle1/140;
 		}
-		else error=-angle/100;
+		else error=-angle1/30;
 
 		propocjonal=error*K_drive;
 
@@ -200,13 +285,27 @@ void TIM4_IRQHandler(void)
 }
 
 /**
+* @brief This function handles USART3 global interrupt.
+*/
+void USART3_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART3_IRQn 0 */
+
+  /* USER CODE END USART3_IRQn 0 */
+  HAL_UART_IRQHandler(&huart3);
+  /* USER CODE BEGIN USART3_IRQn 1 */
+
+  /* USER CODE END USART3_IRQn 1 */
+}
+
+/**
 * @brief This function handles EXTI line[15:10] interrupts.
 */
 void EXTI15_10_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI15_10_IRQn 0 */
-	if(start==1) start=0;
-	else start=1;
+	if(Status==STOP_STATUS) Status=DRIVE_STATUS;
+	else Status=STOP_STATUS;
 
 
   /* USER CODE END EXTI15_10_IRQn 0 */

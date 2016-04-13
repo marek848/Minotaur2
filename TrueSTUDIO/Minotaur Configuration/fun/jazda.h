@@ -11,20 +11,25 @@
 #define XMAZE 18
 #define YMAZE 18// Rozmiar labiryntu + 2
 #define ORI_START 1
-#define VEL 700
-#define VELR 500
+#define VEL 300
+#define VELR 700
 #define TARGET_1 8
 #define TARGET_2 9
 
-#define K_drive 2;
+/* ProgramStaus=*/
+#define DRIVE_STATUS 2
+#define PAUSE_STATUS 1
+#define STOP_STATUS 0
+
+#define K_drive 3;
 #define I_drive 0;
-#define D_drive 0//1;
+#define D_drive 0;
 
 #include "stm32f1xx_hal.h"
 
 extern TIM_HandleTypeDef htim4;
 
-volatile uint16_t adcData[8];
+volatile uint16_t adcData[6];
 extern volatile uint32_t adctmp[6];
 extern volatile int32_t SensorTab[6][5];
 extern volatile uint16_t dys0[6];
@@ -37,8 +42,8 @@ volatile uint16_t Max3[6];
 volatile uint16_t Min3[6];
 extern int k;
 extern int l;
-extern uint8_t start;
-extern volatile int32_t angle,distance;
+extern uint8_t Status;
+extern volatile int32_t angle,distance,angle1;
 
 extern int32_t speed[2];
 extern int8_t indexer;
@@ -57,18 +62,22 @@ extern int8_t path[256];
 
 extern uint8_t change_wall;
 
+volatile uint8_t Transmit;
+volatile uint8_t TxBuffer[34];
+volatile uint8_t RxBuffer[8];
+
 int32_t error;
 int32_t regulator;
 
 #define STALA 0
 #define KATNAST 100
 #define WALLSOFF 0
-#define DISTANCE 172000 // rozmiar komórki
-#define SSR_Tresh -1700
-#define SSL_Tresh -1700
-#define SR_Tresh 150//-1750
-#define SL_Tresh 150//-1750
-#define SF_Tresh 100//-2000
+#define DISTANCE 159500 // rozmiar komï¿½rki
+#define SSR_Tresh -70
+#define SSL_Tresh -70
+#define SR_Tresh -150
+#define SL_Tresh -150
+#define SF_Tresh -250
 
 void rotary(int , int32_t);
 void drive(int);
@@ -88,5 +97,6 @@ void Send_Gyro(uint8_t Register, uint8_t Value);
 int8_t Read_Gyro(uint8_t Register);
 int16_t Read_AXIS(uint8_t Register);
 void calibration();
+int32_t abs(int32_t);
 
 #endif /* JAZDA_H_ */

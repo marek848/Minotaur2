@@ -11,7 +11,7 @@
 #define XMAZE 18
 #define YMAZE 18// Rozmiar labiryntu + 2
 #define ORI_START 1
-#define VEL 300
+#define VEL 500
 #define VELR 700
 #define TARGET_1 8
 #define TARGET_2 9
@@ -21,9 +21,9 @@
 #define PAUSE_STATUS 1
 #define STOP_STATUS 0
 
-#define K_drive 3;
-#define I_drive 0;
-#define D_drive 0;
+#define K_drive 3
+#define I_drive 0
+#define D_drive 200
 
 #include "stm32f1xx_hal.h"
 
@@ -67,17 +67,18 @@ volatile uint8_t TxBuffer[34];
 volatile uint8_t RxBuffer[8];
 
 int32_t error;
+int32_t error2;
 int32_t regulator;
 
 #define STALA 0
 #define KATNAST 100
 #define WALLSOFF 0
 #define DISTANCE 159500 // rozmiar kom�rki
-#define SSR_Tresh -70
-#define SSL_Tresh -70
+#define SSR_Tresh -100
+#define SSL_Tresh -100
 #define SR_Tresh -150
 #define SL_Tresh -150
-#define SF_Tresh -250
+#define SF_Tresh -200
 
 void rotary(int , int32_t);
 void drive(int);

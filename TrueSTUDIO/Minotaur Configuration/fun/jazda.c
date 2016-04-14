@@ -58,6 +58,12 @@
 	 Transmit=1;
 //
 }
+ /**************************************************************/
+ void align(int power)
+ {
+
+ }
+
 /**************************************************************/
  void drive(int power)
  {
@@ -372,7 +378,7 @@ void calibration()
 	 HAL_Delay(100);
 
 	 rotary(VELR,-95000);
-	 HAL_Delay(1000);
+	 HAL_Delay(2000);
 	 dys0[4]=SensorTab[4][indexer];
 	 dys0[5]=SensorTab[5][indexer];
 

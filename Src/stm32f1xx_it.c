@@ -247,11 +247,11 @@ void TIM4_IRQHandler(void)
 	{
 		if (SensorTab[2][indexer]-dys0[2]>SSL_Tresh && SensorTab[0][indexer]-dys0[0] >SSL_Tresh && abs(SensorTab[2][indexer]-dys0[2]-(SensorTab[0][indexer]-dys0[0]))<50)
 		{
-			error=(SensorTab[0][indexer]-dys0[0]-(SensorTab[2][indexer]-dys0[2]))*3/4 - (SensorTab[2][indexer]-dys0[2])*5/4-angle1/140;
+			error=(SensorTab[0][indexer]-dys0[0]-(SensorTab[2][indexer]-dys0[2]))*1 - (SensorTab[0][indexer]-dys0[0])*5/2-angle1/90;
 		}
 		else if(SensorTab[3][indexer]-dys0[3]>SSR_Tresh && SensorTab[1][indexer]-dys0[1]>SSR_Tresh && abs(SensorTab[3][indexer]-dys0[3]-(SensorTab[1][indexer]-dys0[1]))<50)
 		{
-			error= (SensorTab[3][indexer]-dys0[3]-(SensorTab[1][indexer]-dys0[1]))*1 + (SensorTab[3][indexer]-dys0[3])*5/4-angle1/140;
+			error= (SensorTab[3][indexer]-dys0[3]-(SensorTab[1][indexer]-dys0[1]))*1 + (SensorTab[1][indexer]-dys0[1])*5/2-angle1/90;
 		}
 		else error=-angle1/30;
 
@@ -261,8 +261,8 @@ void TIM4_IRQHandler(void)
 		if (integral>1000) integral=100;
 		if (integral<-1000) integral=-100;
 
-		derivative=(error-(SensorTab[3][(indexer+1)%5]-SensorTab[1][(indexer+1)%5])*3/4 + (SensorTab[3][(indexer+1)%5]-dys0[3]))*D_drive;
-
+		derivative=(error-error2)*D_drive;
+		error2=error;
 		regulator=propocjonal+integral+derivative;
 
 		speed[0]=VEL-regulator;

@@ -85,24 +85,41 @@
 	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,0);
 	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,0);
 
+//	if(wall_left==1)
+//	{
+//		angle1=SensorTab[0][indexer]-dys0[0]-(SensorTab[2][indexer]-dys0[2]);
+//		angle1=angle1*5;
+//	}
+//	if(wall_right==1)
+//	{
+//		angle1=SensorTab[3][indexer]-dys0[3]-(SensorTab[1][indexer]-dys0[1]);
+//		angle1=angle1*5;
+//	}
+
 	tryb=1;
 	while(distance<DISTANCE)
 	{
 
-//		if(change_wall==0)
-//		{
-//			if(SensorTab[2][indexer]-dys0[2]<SL_Tresh && wall_left==1) change_wall=1;
-//			if(SensorTab[2][indexer]-dys0[2]>SL_Tresh && wall_left==0) change_wall=1;
-//			if(SensorTab[3][indexer]-dys0[3]<SR_Tresh && wall_right==1) change_wall=1;
-//			if(SensorTab[3][indexer]-dys0[3]>SR_Tresh && wall_right==0) change_wall=1;
-//
-//			if (change_wall==1)
-//			{
-//				HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,1);
-//				HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,1);
-//				distance=69000;
-//			}
-//		}
+		if(change_wall==0)
+		{
+			if(SensorTab[2][indexer]-dys0[2]<SL_Tresh && wall_left==1 && SensorTab[0][indexer]-dys0[0]>SL_Tresh) change_wall=1;
+			if(SensorTab[2][indexer]-dys0[2]>SL_Tresh && wall_left==0) change_wall=0;
+			if(SensorTab[3][indexer]-dys0[3]<SR_Tresh && wall_right==1 && SensorTab[1][indexer]-dys0[1]>SR_Tresh) change_wall=2;
+			if(SensorTab[3][indexer]-dys0[3]>SR_Tresh && wall_right==0) change_wall=0;
+
+			if (change_wall==1)
+			{
+				HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,1);
+				HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,0);
+				distance=80000;
+			}
+			if (change_wall==2)
+			{
+				HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,0);
+				HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,1);
+				distance=80000;
+			}
+		}
 	}
 
    	tryb=0;
@@ -384,6 +401,12 @@ void calibration()
 
 	 rotary(VELR,90000);
 	 HAL_Delay(100);
+	 if (SensorTab[4][indexer]-dys0[4] > SF_Tresh && SensorTab[5][indexer]-dys0[5] > SF_Tresh)
+	 {
+		 rotary(VELR,90000);
+		 HAL_Delay(100);
+	 }
+
   	 for(i1=0;i1<4;i1++) dys0[i1]=SensorTab[i1][indexer];
 
 

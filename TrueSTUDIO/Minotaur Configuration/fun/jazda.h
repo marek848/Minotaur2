@@ -11,7 +11,7 @@
 #define XMAZE 18
 #define YMAZE 18// Rozmiar labiryntu + 2
 #define ORI_START 1
-#define VEL 500
+#define VEL 300
 #define VELR 700
 #define TARGET_1 8
 #define TARGET_2 9
@@ -21,9 +21,9 @@
 #define PAUSE_STATUS 1
 #define STOP_STATUS 0
 
-#define K_drive 3
+#define K_drive 9/2
 #define I_drive 0
-#define D_drive 200
+#define D_drive 600
 
 #include "stm32f1xx_hal.h"
 

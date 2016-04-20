@@ -203,7 +203,6 @@ int main(void)
 		  HAL_TIM_Base_Start_IT(&htim4);
 		  set();
 		  drive(VEL);
-
 	  }
   /* USER CODE END WHILE */
 

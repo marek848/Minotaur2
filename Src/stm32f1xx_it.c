@@ -218,7 +218,7 @@ void TIM4_IRQHandler(void)
 			}
 		}
 
-	test3[0]=SensorTab[0][indexer];
+	test3[0]=SensorTab[4][indexer];
 
 	/******************************************* Measurement rotational speed ***********************************/
 	if(count%4==3)
@@ -245,13 +245,13 @@ void TIM4_IRQHandler(void)
 	/******************************************* Drive straight ***********************************/
 	if(tryb==1)
 	{
-		if (SensorTab[2][indexer]-dys0[2]>SSL_Tresh && SensorTab[0][indexer]-dys0[0] >SSL_Tresh && abs(SensorTab[2][indexer]-dys0[2]-(SensorTab[0][indexer]-dys0[0]))<50)
+		if (SensorTab[2][indexer]-dys0[2]>SSL_Tresh && SensorTab[0][indexer]-dys0[0] >SSL_Tresh && abs(SensorTab[2][indexer]-dys0[2]-(SensorTab[0][indexer]-dys0[0]))<80)
 		{
-			error=(SensorTab[0][indexer]-dys0[0]-(SensorTab[2][indexer]-dys0[2]))*1 - (SensorTab[0][indexer]-dys0[0])*5/2-angle1/90;
+			error=(SensorTab[0][indexer]-dys0[0]-(SensorTab[2][indexer]-dys0[2]))*3/2 - (SensorTab[0][indexer]-dys0[0])*5/2-angle1/90;
 		}
-		else if(SensorTab[3][indexer]-dys0[3]>SSR_Tresh && SensorTab[1][indexer]-dys0[1]>SSR_Tresh && abs(SensorTab[3][indexer]-dys0[3]-(SensorTab[1][indexer]-dys0[1]))<50)
+		else if(SensorTab[3][indexer]-dys0[3]>SSR_Tresh && SensorTab[1][indexer]-dys0[1]>SSR_Tresh && abs(SensorTab[3][indexer]-dys0[3]-(SensorTab[1][indexer]-dys0[1]))<80)
 		{
-			error= (SensorTab[3][indexer]-dys0[3]-(SensorTab[1][indexer]-dys0[1]))*1 + (SensorTab[1][indexer]-dys0[1])*5/2-angle1/90;
+			error= (SensorTab[3][indexer]-dys0[3]-(SensorTab[1][indexer]-dys0[1]))*3/2 + (SensorTab[1][indexer]-dys0[1])*5/2-angle1/90;
 		}
 		else error=-angle1/30;
 

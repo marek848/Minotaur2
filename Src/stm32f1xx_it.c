@@ -38,6 +38,7 @@
 /* USER CODE BEGIN 0 */
 #include "jazda.h"
 
+int32_t le_back, ri_back, le_fr, ri_fr;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -245,21 +246,36 @@ void TIM4_IRQHandler(void)
 	/******************************************* Drive straight ***********************************/
 	if(tryb==1)
 	{
-		if (SensorTab[2][indexer]-dys0[2]>SSL_Tresh && SensorTab[0][indexer]-dys0[0] >SSL_Tresh && abs(SensorTab[2][indexer]-dys0[2]-(SensorTab[0][indexer]-dys0[0]))<80)
+		le_fr=SensorTab[2][indexer]-dys0[2];
+		le_back=SensorTab[0][indexer]-dys0[0];
+		ri_fr=SensorTab[3][indexer]-dys0[3];
+		ri_back=SensorTab[1][indexer]-dys0[1];
+
+//		if (le_fr>SSL_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<80)
+//		{
+//			error=(le_back-le_fr)*5/2 - le_back*3/2 - angle1/80;
+//		}
+//		else if(ri_fr>SSR_Tresh && ri_back>SSR_Tresh && abs(ri_fr-ri_back)<80)
+//		{
+//			error= (ri_fr-ri_back)*5/2 + ri_back*3/2 - angle1/80;
+//		}
+//		else error=-angle1/30;
+
+		if (le_fr>SSL_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<80)
 		{
-			error=(SensorTab[0][indexer]-dys0[0]-(SensorTab[2][indexer]-dys0[2]))*3/2 - (SensorTab[0][indexer]-dys0[0])*5/2-angle1/90;
+			error=(le_back-le_fr)*5/2 - le_back*3/2 - le_back*abs(le_back)/160 - angle1/80;
 		}
-		else if(SensorTab[3][indexer]-dys0[3]>SSR_Tresh && SensorTab[1][indexer]-dys0[1]>SSR_Tresh && abs(SensorTab[3][indexer]-dys0[3]-(SensorTab[1][indexer]-dys0[1]))<80)
+		else if(ri_fr>SSR_Tresh && ri_back>SSR_Tresh && abs(ri_fr-ri_back)<80)
 		{
-			error= (SensorTab[3][indexer]-dys0[3]-(SensorTab[1][indexer]-dys0[1]))*3/2 + (SensorTab[1][indexer]-dys0[1])*5/2-angle1/90;
+			error= (ri_fr-ri_back)*5/2 + ri_back*3/2 +ri_back*abs(ri_back)/160 - angle1/80;
 		}
 		else error=-angle1/30;
 
 		propocjonal=error*K_drive;
 
 		integral+=error*I_drive;
-		if (integral>1000) integral=100;
-		if (integral<-1000) integral=-100;
+		if (integral>200) integral=100;
+		if (integral<-200) integral=-100;
 
 		derivative=(error-error2)*D_drive;
 		error2=error;

@@ -57,6 +57,8 @@ UART_HandleTypeDef huart3;
 DMA_HandleTypeDef hdma_usart3_tx;
 DMA_HandleTypeDef hdma_usart3_rx;
 
+int32_t le_back, ri_back, le_fr, ri_fr;
+
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
@@ -108,6 +110,7 @@ int8_t target[2]={TARGET_1,TARGET_2};
 int8_t path[256];
 
 uint8_t change_wall;
+uint8_t change_wall_1;
 
 int16_t X=0,Y=0,Z=0;
 
@@ -123,7 +126,8 @@ int main(void)
   /* MCU Configuration----------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+
+	HAL_Init();
 
   /* Configure the system clock */
   SystemClock_Config();

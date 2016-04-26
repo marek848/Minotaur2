@@ -7,6 +7,7 @@
 
 #include "stm32f1xx_hal.h"
 #include "jazda.h"
+int32_t lef_back, rig_back, lef_fr, rig_fr;
 
  /**************************************************************/
  void rotary(int power, int32_t obrot)
@@ -55,6 +56,7 @@
 	 if(ori>4) ori-=4;
 	 angle=0;
 	 angle1=0;
+	 integral=0;
 	 Transmit=1;
 //
 }
@@ -80,6 +82,7 @@
 	else wall_right=1;
 
 	change_wall=0;
+	change_wall_1=0;
 	distance=0;
 
 	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,0);
@@ -99,7 +102,10 @@
 	tryb=1;
 	while(distance<DISTANCE)
 	{
-
+		lef_fr=SensorTab[2][indexer]-dys0[2];
+		lef_back=SensorTab[0][indexer]-dys0[0];
+		rig_fr=SensorTab[3][indexer]-dys0[3];
+		rig_back=SensorTab[1][indexer]-dys0[1];
 		if(change_wall==0)
 		{
 			if(SensorTab[2][indexer]-dys0[2]<SL_Tresh && wall_left==1 && SensorTab[0][indexer]-dys0[0]>SL_Tresh) change_wall=1;
@@ -120,6 +126,19 @@
 				distance=80000;
 			}
 		}
+		if(change_wall_1==0)
+		{
+			if(lef_fr>SL_Tresh && wall_left==0 && lef_back>SL_Tresh) change_wall_1=1;
+			if(rig_fr>SR_Tresh && wall_right==0 && rig_back>SR_Tresh) change_wall_1=2;
+
+			if (change_wall_1==1)
+			{
+				HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,1);
+				HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,1);
+				distance=100000;
+			}
+		}
+
 	}
 
    	tryb=0;

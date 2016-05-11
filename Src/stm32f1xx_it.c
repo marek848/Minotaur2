@@ -256,11 +256,11 @@ void TIM4_IRQHandler(void)
 
 		if (le_fr>SSL_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<80)
 		{
-			error=(le_back-le_fr)*5/2 - le_back*3/2 - le_back*abs(le_back)/160 - angle1/80;
+			error=(le_back-le_fr)*5/2 - le_back*3/2 - angle1/90;
 		}
 		else if(ri_fr>SSR_Tresh && ri_back>SSR_Tresh && abs(ri_fr-ri_back)<80)
 		{
-			error= (ri_fr-ri_back)*5/2 + ri_back*3/2 +ri_back*abs(ri_back)/160 - angle1/80;
+			error= (ri_fr-ri_back)*5/2 + ri_back*3/2 - angle1/90;
 		}
 		else error=-angle1/30;
 

@@ -57,8 +57,6 @@ UART_HandleTypeDef huart3;
 DMA_HandleTypeDef hdma_usart3_tx;
 DMA_HandleTypeDef hdma_usart3_rx;
 
-int32_t le_back, ri_back, le_fr, ri_fr;
-
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
@@ -87,7 +85,7 @@ static void MX_USART3_UART_Init(void);
 
 //uint16_t adcData[6];
 volatile uint32_t adctmp[6]={0,0,0,0,0,0};
-volatile int32_t SensorTab[6][5];
+volatile int32_t SensorTab[6];
 volatile uint16_t dys0[6]={0,0,0,0,0,0};
 uint8_t counter=0;
 volatile int32_t lin_vel=0,rot_vel;
@@ -126,8 +124,7 @@ int main(void)
   /* MCU Configuration----------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-
-	HAL_Init();
+  HAL_Init();
 
   /* Configure the system clock */
   SystemClock_Config();
@@ -160,7 +157,7 @@ int main(void)
     // Start ADC DMA
   HAL_ADC_Start(&hadc1);
   HAL_ADCEx_Calibration_Start(&hadc1);
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&adcData, 6);
+//  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&adcData, 6);
 
   HAL_UART_MspInit(&huart3);
 
@@ -190,7 +187,7 @@ int main(void)
   while (1)
   {
 
-		  if (istarget(x,y)==1) rstdrive();
+  if (istarget(x,y)==1) rstdrive();
   if(Status==DRIVE_STATUS)
 	  {
 		  if (walls[x][y]==-1)
@@ -264,7 +261,7 @@ void MX_ADC1_Init(void)
     */
   hadc1.Instance = ADC1;
   hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
-  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
@@ -273,8 +270,14 @@ void MX_ADC1_Init(void)
 
     /**Configure Regular Channel 
     */
-  sConfig.Channel = ADC_CHANNEL_11;
+  sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+
+    /**Configure Regular Channel 
+    */
+  sConfig.Channel = ADC_CHANNEL_11;
   sConfig.SamplingTime = ADC_SAMPLETIME_41CYCLES_5;
   HAL_ADC_ConfigChannel(&hadc1, &sConfig);
 

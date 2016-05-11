@@ -80,15 +80,15 @@ if(HAL_GetTick()%100==0 && Status!=STOP_STATUS && Transmit==1) HAL_UART_Transmit
 void DMA1_Channel1_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
-	uint8_t i;
-//	counter++;
-
-		for(i=0;i<6;i++)
-		{
-			test=adcData[i];
-			if(test>Max3[i]) Max3[i]=test;
-			if(test<Min3[i]) Min3[i]=test;
-		}
+//	uint8_t i;
+////	counter++;
+//
+//		for(i=0;i<6;i++)
+//		{
+//			test=adcData[i];
+//			if(test>Max3[i]) Max3[i]=test;
+//			if(test<Min3[i]) Min3[i]=test;
+//		}
 
   /* USER CODE END DMA1_Channel1_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_adc1);
@@ -108,7 +108,7 @@ void DMA1_Channel2_IRQHandler(void)
 	TxBuffer[0]='#';
 	for (i=0;i<8;i++)
 	{
-		if (i<6) pom=SensorTab[i][indexer]-dys0[i];
+		if (i<6) pom=SensorTab[i]-dys0[i];
 		if(i==6) pom=angle/1000;
 		if(i==7) pom=distance/1000;
 		if (pom>0)
@@ -184,42 +184,35 @@ void TIM4_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM4_IRQn 0 */
 	static uint8_t count=0;
+	int i;
 	static int32_t rate[3]={0,0,0},prev_rate=0,tmp_rate[2],prev_vel=0;
 
+	indexer=count%4;
+	switch (count%4)
+	{
+		case 0:
+				HAL_GPIO_WritePin(Sensor2_GPIO_Port,Sensor2_Pin,1);
+				HAL_GPIO_WritePin(Sensor1_GPIO_Port,Sensor1_Pin,1);
+//				SensorTab[0]=adcDataOn[4]-adcDataOff[4];
+//				SensorTab[1]=adcDataOn[5]-adcDataOff[5];
+//				SensorTab[2]=adcDataOn[0]-adcDataOff[0];
+//				SensorTab[3]=adcDataOn[1]-adcDataOff[1];
+//				SensorTab[4]=adcDataOn[2]-adcDataOff[2];
+//				SensorTab[5]=adcDataOn[3]-adcDataOff[3];
+				for(i=0;i<6;i++) SensorTab[i]=(adcDataOn[i]-adcDataOff[i])/10;
+				break;
+		case 1:
+				HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcDataOn, ADC_SIZE);
+				break;
+		case 2:
+				HAL_GPIO_WritePin(Sensor1_GPIO_Port,Sensor1_Pin,0);
+				HAL_GPIO_WritePin(Sensor2_GPIO_Port,Sensor2_Pin,0);
+				break;
+		case 3:
+				HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adcDataOff, ADC_SIZE);
+				break;
+	}
 	count++;
-	indexer=count%5;
-	if(count%2==0)
-		{
-			HAL_GPIO_WritePin(Sensor2_GPIO_Port,Sensor2_Pin,0);
-			HAL_GPIO_WritePin(Sensor1_GPIO_Port,Sensor1_Pin,1);
-//			HAL_GPIO_WritePin(Sensor3_GPIO_Port,Sensor3_Pin,1);
-
-			for(i=0;i<6;i++)
-			{
-				if(i==1||i==2||i==5) MinMax[i][0]=Max3[i];
-				if(i==0||i==3||i==4) MinMax[i][1]=Min3[i];
-				SensorTab[i][indexer]=(MinMax[i][0]-MinMax[i][1])/10;
-				Min3[i]=4000;
-				Max3[i]=0;
-			}
-		}
-		else
-		{
-			HAL_GPIO_WritePin(Sensor1_GPIO_Port,Sensor1_Pin,0);
-			HAL_GPIO_WritePin(Sensor2_GPIO_Port,Sensor2_Pin,1);
-//			HAL_GPIO_WritePin(Sensor3_GPIO_Port,Sensor3_Pin,0);
-
-			for(i=0;i<6;i++)
-			{
-				if(i==0||i==3||i==4) MinMax[i][0]=Max3[i];
-				if(i==1||i==2||i==5) MinMax[i][1]=Min3[i];
-				SensorTab[i][indexer]=(MinMax[i][0]-MinMax[i][1])/10;
-				Min3[i]=4000;
-				Max3[i]=0;
-			}
-		}
-
-	test3[0]=SensorTab[4][indexer];
 
 	/******************************************* Measurement rotational speed ***********************************/
 	if(count%4==3)
@@ -246,10 +239,10 @@ void TIM4_IRQHandler(void)
 	/******************************************* Drive straight ***********************************/
 	if(tryb==1)
 	{
-		le_fr=SensorTab[2][indexer]-dys0[2];
-		le_back=SensorTab[0][indexer]-dys0[0];
-		ri_fr=SensorTab[3][indexer]-dys0[3];
-		ri_back=SensorTab[1][indexer]-dys0[1];
+		le_fr=SensorTab[2]-dys0[2];
+		le_back=SensorTab[0]-dys0[0];
+		ri_fr=SensorTab[3]-dys0[3];
+		ri_back=SensorTab[1]-dys0[1];
 
 //		if (le_fr>SSL_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<80)
 //		{

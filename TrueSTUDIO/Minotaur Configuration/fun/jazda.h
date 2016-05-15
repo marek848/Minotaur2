@@ -8,6 +8,8 @@
 #ifndef JAZDA_H_
 #define JAZDA_H_
 
+#define ADC_SIZE 6
+
 #define XMAZE 18
 #define YMAZE 18// Rozmiar labiryntu + 2
 #define ORI_START 1
@@ -25,17 +27,17 @@
 //#define I_drive 1/2000
 //#define D_drive 300
 
-#define K_drive 5/2
+#define K_drive 3/2
 #define I_drive 0
-#define D_drive 250
+#define D_drive 0
 
 #include "stm32f1xx_hal.h"
 
 extern TIM_HandleTypeDef htim4;
 
-volatile uint16_t adcData[6];
+volatile uint16_t adcDataOn[6],adcDataOff[6],adcData[6];
 extern volatile uint32_t adctmp[6];
-extern volatile int32_t SensorTab[6][5];
+extern volatile int32_t SensorTab[6];
 extern volatile uint16_t dys0[6];
 extern uint8_t counter;
 extern volatile int32_t lin_vel,rot_vel;
@@ -66,6 +68,7 @@ extern int8_t path[256];
 
 extern uint8_t change_wall;
 extern uint8_t change_wall_1;
+extern uint8_t column;
 
 volatile uint8_t Transmit;
 volatile uint8_t TxBuffer[34];
@@ -78,14 +81,15 @@ int32_t regulator;
 #define STALA 0
 #define KATNAST 100
 #define WALLSOFF 0
-#define DISTANCE 159500 // rozmiar kom�rki
+#define DISTANCE 159000 // rozmiar kom�rki
 #define SSR_Tresh -100
 #define SSL_Tresh -100
 #define SR_Tresh -150
 #define SL_Tresh -150
-#define SF_Tresh -220
+#define SF_Tresh -140
 
 void rotary(int , int32_t);
+void align(int);
 void drive(int);
 
 int istarget(int , int );
@@ -104,5 +108,7 @@ int8_t Read_Gyro(uint8_t Register);
 int16_t Read_AXIS(uint8_t Register);
 void calibration();
 int32_t abs(int32_t);
+
+extern ADC_HandleTypeDef hadc1;
 
 #endif /* JAZDA_H_ */

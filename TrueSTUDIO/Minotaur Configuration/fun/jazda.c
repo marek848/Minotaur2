@@ -7,7 +7,7 @@
 
 #include "stm32f1xx_hal.h"
 #include "jazda.h"
-int32_t lef_back, rig_back, lef_fr, rig_fr;
+int32_t lef_back, rig_back, lef_fr, rig_fr, front_right,front_left;
 
  /**************************************************************/
  void rotary(int power, int32_t obrot)
@@ -54,6 +54,9 @@ int32_t lef_back, rig_back, lef_fr, rig_fr;
 	 if ((obrot<-135000 && obrot>-225000) || (obrot>135000 && obrot<225000))  ori+=2;
 
 	 if(ori>4) ori-=4;
+
+
+
 	 angle=0;
 	 angle1=0;
 	 integral=0;
@@ -63,27 +66,106 @@ int32_t lef_back, rig_back, lef_fr, rig_fr;
  /**************************************************************/
  void align(int power)
  {
+	 int error3;
 
+	 int le_fr=SensorTab[2]-dys0[2];
+	 int le_back=SensorTab[0]-dys0[0];
+	 int ri_fr=SensorTab[3]-dys0[3];
+	 int ri_back=SensorTab[1]-dys0[1];
+
+	 if (ri_fr>SR_Tresh && ri_back>SR_Tresh && abs(ri_fr-ri_back)<100 && abs(ri_fr-ri_back)>50)
+	 {
+		 error3=ri_fr-ri_back;
+		 while(abs(error3)>2)
+		 {
+			 le_fr=SensorTab[2]-dys0[2];
+			 le_back=SensorTab[0]-dys0[0];
+			 ri_fr=SensorTab[3]-dys0[3];
+			 ri_back=SensorTab[1]-dys0[1];
+			 error3=ri_fr-ri_back;
+			 if(error3<0)
+			 {
+				 HAL_GPIO_WritePin(AIN1_GPIO_Port,AIN1_Pin,1);
+				 HAL_GPIO_WritePin(AIN2_GPIO_Port,AIN2_Pin,0);
+				 HAL_GPIO_WritePin(BIN1_GPIO_Port,BIN1_Pin,0);
+				 HAL_GPIO_WritePin(BIN2_GPIO_Port,BIN2_Pin,1);
+			 }
+			 else
+			 {
+
+				HAL_GPIO_WritePin(AIN1_GPIO_Port,AIN1_Pin,0);
+				HAL_GPIO_WritePin(AIN2_GPIO_Port,AIN2_Pin,1);
+				HAL_GPIO_WritePin(BIN1_GPIO_Port,BIN1_Pin,1);
+				HAL_GPIO_WritePin(BIN2_GPIO_Port,BIN2_Pin,0);
+			 }
+
+			 if(error3<0) error3=error3*(-1);
+			 if(error3>power) error3=power;
+
+			 TIM1->CCR1=error3+100;
+			 TIM1->CCR2=error3+100;
+		 }
+	 }
+	 else if(le_fr>SL_Tresh &&  le_back>SL_Tresh && abs(le_fr-le_back)<100 && abs(le_back-le_fr)>50)
+	 {
+		 error3=le_back-le_fr;
+		 while(abs(error3)>5)
+		 {
+			 le_fr=SensorTab[2]-dys0[2];
+			 le_back=SensorTab[0]-dys0[0];
+			 ri_fr=SensorTab[3]-dys0[3];
+			 ri_back=SensorTab[1]-dys0[1];
+			 error3=le_back-le_fr;
+			 if(error3<0)
+			 {
+				 HAL_GPIO_WritePin(AIN1_GPIO_Port,AIN1_Pin,1);
+				 HAL_GPIO_WritePin(AIN2_GPIO_Port,AIN2_Pin,0);
+				 HAL_GPIO_WritePin(BIN1_GPIO_Port,BIN1_Pin,0);
+				 HAL_GPIO_WritePin(BIN2_GPIO_Port,BIN2_Pin,1);
+			 }
+			 else
+			 {
+
+				HAL_GPIO_WritePin(AIN1_GPIO_Port,AIN1_Pin,0);
+				HAL_GPIO_WritePin(AIN2_GPIO_Port,AIN2_Pin,1);
+				HAL_GPIO_WritePin(BIN1_GPIO_Port,BIN1_Pin,1);
+				HAL_GPIO_WritePin(BIN2_GPIO_Port,BIN2_Pin,0);
+			 }
+
+			 if(error3<0) error3=error3*(-1);
+			 if(error3>power) error3=power;
+
+			 TIM1->CCR1=error3+100;
+			 TIM1->CCR2=error3+100;
+		 }
+	 }
+	 TIM1->CCR1=0;
+	 TIM1->CCR2=0;
+
+	 angle=0;
+	 angle1=0;
  }
 
 /**************************************************************/
  void drive(int power)
  {
-	uint8_t wall_left, wall_right;
+	uint8_t wall_left, wall_right, wall_flag;
 
 	HAL_GPIO_WritePin(AIN1_GPIO_Port,AIN1_Pin,0);
 	HAL_GPIO_WritePin(AIN2_GPIO_Port,AIN2_Pin,1);
 	HAL_GPIO_WritePin(BIN1_GPIO_Port,BIN1_Pin,0);
 	HAL_GPIO_WritePin(BIN2_GPIO_Port,BIN2_Pin,1);
 
-	if(SensorTab[2][indexer]-dys0[2]<SL_Tresh && SensorTab[0][indexer]-dys0[0]<SL_Tresh) wall_left=0;
+	if(SensorTab[2]-dys0[2]<SL_Tresh && SensorTab[0]-dys0[0]<SL_Tresh) wall_left=0;
 	else wall_left=1;
-	if(SensorTab[3][indexer]-dys0[3]<SR_Tresh && SensorTab[1][indexer]-dys0[1]<SR_Tresh) wall_right=0;
+	if(SensorTab[3]-dys0[3]<SR_Tresh && SensorTab[1]-dys0[1]<SR_Tresh) wall_right=0;
 	else wall_right=1;
 
 	change_wall=0;
 	change_wall_1=0;
+	column=0;
 	distance=0;
+	angle1=0;
 
 	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,0);
 	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,0);
@@ -102,16 +184,19 @@ int32_t lef_back, rig_back, lef_fr, rig_fr;
 	tryb=1;
 	while(distance<DISTANCE)
 	{
-		lef_fr=SensorTab[2][indexer]-dys0[2];
-		lef_back=SensorTab[0][indexer]-dys0[0];
-		rig_fr=SensorTab[3][indexer]-dys0[3];
-		rig_back=SensorTab[1][indexer]-dys0[1];
+		lef_fr=SensorTab[2]-dys0[2];
+		lef_back=SensorTab[0]-dys0[0];
+		rig_fr=SensorTab[3]-dys0[3];
+		rig_back=SensorTab[1]-dys0[1];
+		front_left=SensorTab[4]-dys0[4];
+		front_right=SensorTab[5]-dys0[5];
+
 		if(change_wall==0)
 		{
-			if(SensorTab[2][indexer]-dys0[2]<SL_Tresh && wall_left==1 && SensorTab[0][indexer]-dys0[0]>SL_Tresh) change_wall=1;
-			if(SensorTab[2][indexer]-dys0[2]>SL_Tresh && wall_left==0) change_wall=0;
-			if(SensorTab[3][indexer]-dys0[3]<SR_Tresh && wall_right==1 && SensorTab[1][indexer]-dys0[1]>SR_Tresh) change_wall=2;
-			if(SensorTab[3][indexer]-dys0[3]>SR_Tresh && wall_right==0) change_wall=0;
+			if(SensorTab[2]-dys0[2]<SL_Tresh && wall_left==1 && SensorTab[0]-dys0[0]>SL_Tresh) change_wall=1;
+			if(SensorTab[2]-dys0[2]>SL_Tresh && wall_left==0) change_wall=0;
+			if(SensorTab[3]-dys0[3]<SR_Tresh && wall_right==1 && SensorTab[1]-dys0[1]>SR_Tresh) change_wall=2;
+			if(SensorTab[3]-dys0[3]>SR_Tresh && wall_right==0) change_wall=0;
 
 			if (change_wall==1)
 			{
@@ -121,8 +206,8 @@ int32_t lef_back, rig_back, lef_fr, rig_fr;
 			}
 			if (change_wall==2)
 			{
-				HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,0);
-				HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,1);
+				HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,1);
+				HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,0);
 				distance=80000;
 			}
 		}
@@ -131,25 +216,69 @@ int32_t lef_back, rig_back, lef_fr, rig_fr;
 			if(lef_fr>SL_Tresh && wall_left==0 && lef_back>SL_Tresh) change_wall_1=1;
 			if(rig_fr>SR_Tresh && wall_right==0 && rig_back>SR_Tresh) change_wall_1=2;
 
-			if (change_wall_1==1)
+			if (change_wall_1==1 || change_wall_1==2)
 			{
-				HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,1);
+				HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,0);
 				HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,1);
-				distance=100000;
+				distance=105000;
 			}
 		}
+		if(column==0)
+		{
+			if(lef_fr>SL_Tresh && wall_left==0 && lef_back<SL_Tresh) column=1;
+			if(rig_fr>SR_Tresh && wall_right==0 && rig_back<SR_Tresh) column=2;
+		}
+		if(column==1 && lef_fr<SL_Tresh && wall_left==0 && lef_back<SL_Tresh) column=3;
+		if(column==2 && rig_fr<SR_Tresh && wall_right==0 && rig_back<SR_Tresh) column=3;
+		if (column==3)
+		{
+			HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,1);
+			HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,1);
+			distance=75000;
+			column=4;
+		}
 
+		if (front_left >5 || front_right >5 )
+		{
+			wall_flag=1;
+			tryb=0;
+			TIM1->CCR1=0;
+			TIM1->CCR2=0;
+
+			HAL_Delay(1000);
+			break;
+		}
 	}
 
    	tryb=0;
 
 	TIM1->CCR1=0;
 	TIM1->CCR2=0;
+	if(wall_flag==0)
+	{
+		if (ori==1) y++;
+		else if(ori==2) x++;
+		else if(ori==3) y--;
+		else if(ori==4) x--;
+	}
+	else if (distance > 120000)
+	{
+		if (ori==1) y++;
+		else if(ori==2) x++;
+		else if(ori==3) y--;
+		else if(ori==4) x--;
+	}
+	else
+	{
+		mapCell();
 
-	if (ori==1) y++;
-	else if(ori==2) x++;
-	else if(ori==3) y--;
-	else if(ori==4) x--;
+		HAL_TIM_Base_Stop_IT(&htim4);
+
+		flood();
+		findPath();
+
+		HAL_TIM_Base_Start_IT(&htim4);
+	}
 
  }
 /****************************************************/
@@ -213,9 +342,18 @@ void readPath()
 /****************************************************/
 void set()
 {
-	if (state-ori==1 || state-ori==-3) rotary(VELR,90000/*+angle/2*/);
-	else if (state-ori==2 || state-ori==-2) rotary(VELR,180000/*+angle/2*/);
-	else if (state-ori==3 || state-ori==-1) rotary(VELR,-95000/*+angle/2*/);
+	if (state-ori==1 || state-ori==-3) {
+		rotary(VELR,90000/*+angle/2*/);
+		align(VELR);
+	}
+	else if (state-ori==2 || state-ori==-2) {
+		rotary(VELR,180000/*+angle/2*/);
+		align(VELR);
+	}
+	else if (state-ori==3 || state-ori==-1) {
+		rotary(VELR,-95000/*+angle/2*/);
+		align(VELR);
+	}
 }
 /****************************************************/
 void rstdrive()
@@ -243,7 +381,7 @@ void mapCell()
 	int8_t i;
 	int32_t czujnik[6];
 
-	for (i=0;i<6;i++) czujnik[i]=SensorTab[i][indexer]-dys0[i];
+	for (i=0;i<6;i++) czujnik[i]=SensorTab[i]-dys0[i];
 	walls[x][y]=0;
 	if(ori==1)
 	{
@@ -415,18 +553,18 @@ void calibration()
 
 	 rotary(VELR,-95000);
 	 HAL_Delay(2000);
-	 dys0[4]=SensorTab[4][indexer];
-	 dys0[5]=SensorTab[5][indexer];
+	 dys0[4]=SensorTab[4];
+	 dys0[5]=SensorTab[5];
 
 	 rotary(VELR,90000);
 	 HAL_Delay(100);
-	 if (SensorTab[4][indexer]-dys0[4] > SF_Tresh && SensorTab[5][indexer]-dys0[5] > SF_Tresh)
+	 if (SensorTab[4]-dys0[4] > SF_Tresh && SensorTab[5]-dys0[5] > SF_Tresh)
 	 {
 		 rotary(VELR,90000);
 		 HAL_Delay(100);
 	 }
 
-  	 for(i1=0;i1<4;i1++) dys0[i1]=SensorTab[i1][indexer];
+  	 for(i1=0;i1<4;i1++) dys0[i1]=SensorTab[i1];
 
 
 //  	rotary_new(VELR,90000);

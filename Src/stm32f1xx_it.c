@@ -109,7 +109,7 @@ void DMA1_Channel2_IRQHandler(void)
 	for (i=0;i<8;i++)
 	{
 		if (i<6) pom=SensorTab[i]-dys0[i];
-		if(i==6) pom=angle/1000;
+		if(i==6) pom=angle1/1000;
 		if(i==7) pom=distance/1000;
 		if (pom>0)
 		{
@@ -244,23 +244,17 @@ void TIM4_IRQHandler(void)
 		ri_fr=SensorTab[3]-dys0[3];
 		ri_back=SensorTab[1]-dys0[1];
 
-//		if (le_fr>SSL_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<80)
-//		{
-//			error=(le_back-le_fr)*5/2 - le_back*3/2 - angle1/80;
-//		}
-//		else if(ri_fr>SSR_Tresh && ri_back>SSR_Tresh && abs(ri_fr-ri_back)<80)
-//		{
-//			error= (ri_fr-ri_back)*5/2 + ri_back*3/2 - angle1/80;
-//		}
-//		else error=-angle1/30;
-
-		if (le_fr>SSL_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<80)
+		if (ri_back>SSR_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<100 && abs(ri_fr-ri_back)<100)
 		{
-			error=(le_back-le_fr)*5/2 - le_back*3/2 - angle1/90;
+			error=(ri_back - le_back)*2/2 - angle1/90;
 		}
-		else if(ri_fr>SSR_Tresh && ri_back>SSR_Tresh && abs(ri_fr-ri_back)<80)
+		else if (le_fr>SSL_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<100)
 		{
-			error= (ri_fr-ri_back)*5/2 + ri_back*3/2 - angle1/90;
+			error=(le_back-le_fr)/4 - le_back*3/2 - angle1/90;
+		}
+		else if(ri_fr>SSR_Tresh && ri_back>SSR_Tresh && abs(ri_fr-ri_back)<100)
+		{
+			error= (ri_fr-ri_back)/4 + ri_back*3/2 - angle1/90;
 		}
 		else error=-angle1/30;
 

@@ -109,6 +109,7 @@ int8_t path[256];
 
 uint8_t change_wall;
 uint8_t change_wall_1;
+uint8_t column;
 
 int16_t X=0,Y=0,Z=0;
 
@@ -124,7 +125,7 @@ int main(void)
   /* MCU Configuration----------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+   HAL_Init();
 
   /* Configure the system clock */
   SystemClock_Config();

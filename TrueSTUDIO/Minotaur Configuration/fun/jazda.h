@@ -82,11 +82,17 @@ int32_t regulator;
 #define KATNAST 100
 #define WALLSOFF 0
 #define DISTANCE 159000 // rozmiar kom�rki
-#define SSR_Tresh -90
-#define SSL_Tresh -90
-#define SR_Tresh -150
-#define SL_Tresh -150
-#define SF_Tresh -140
+//#define SSR_Tresh -90
+//#define SSL_Tresh -90
+//#define SR_Tresh -150
+//#define SL_Tresh -150
+//#define SF_Tresh -140
+
+int32_t SSR_Tresh;
+int32_t SSL_Tresh;
+int32_t SR_Tresh;
+int32_t SL_Tresh;
+int32_t SF_Tresh;
 
 void rotary(int , int32_t);
 void align(int);

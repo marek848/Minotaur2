@@ -244,15 +244,15 @@ void TIM4_IRQHandler(void)
 		ri_fr=SensorTab[3]-dys0[3];
 		ri_back=SensorTab[1]-dys0[1];
 
-		if (ri_back>SSR_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<100 && abs(ri_fr-ri_back)<80)
+		if (ri_back>SSR_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<100 && abs(ri_fr-ri_back)<abs(SSR_Tresh))
 		{
 			error=(ri_back - le_back)*2/2 - angle1/90;
 		}
-		else if (le_fr>SSL_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<80)
+		else if (le_fr>SSL_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<abs(SSL_Tresh))
 		{
 			error=(le_back-le_fr)/4 - le_back*3/2 - angle1/90;
 		}
-		else if(ri_fr>SSR_Tresh && ri_back>SSR_Tresh && abs(ri_fr-ri_back)<80)
+		else if(ri_fr>SSR_Tresh && ri_back>SSR_Tresh && abs(ri_fr-ri_back)<abs(SSR_Tresh))
 		{
 			error= (ri_fr-ri_back)/4 + ri_back*3/2 - angle1/90;
 		}

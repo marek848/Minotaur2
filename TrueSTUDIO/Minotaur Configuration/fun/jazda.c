@@ -553,7 +553,7 @@ int16_t Read_AXIS(uint8_t Register)
 void calibration()
 {
 	int16_t pomoc=0;
-	uint8_t i1;
+	uint8_t i1,j1;
 
 	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,0);
 	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,1);
@@ -587,24 +587,78 @@ void calibration()
 	 HAL_TIM_Base_Start_IT(&htim4);
 	 HAL_Delay(100);
 
-	 rotary(VELR,-95000);
-	 HAL_Delay(2000);
-	 dys0[4]=SensorTab[4];
-	 dys0[5]=SensorTab[5];
+	 int32_t tmp[6][4],dys1[6],pom,sum;
+	 uint8_t index[6];
 
-	 rotary(VELR,90000);
-	 HAL_Delay(100);
-	 if (SensorTab[4]-dys0[4] > SF_Tresh && SensorTab[5]-dys0[5] > SF_Tresh)
+	 //dokonywanie pomiarow
+	 for(i1=0;i1<4;i1++)
 	 {
-		 rotary(VELR,90000);
+		 for(j1=0;j1<6;j1++)
+		 {
+			 tmp[j1][i1]=SensorTab[j1];
+		 }
 		 HAL_Delay(100);
+		 rotary(VELR,-95000);
 	 }
 
-  	 for(i1=0;i1<4;i1++) dys0[i1]=SensorTab[i1];
+	 //wyznaczanie minimalnych odczytow
+	 for(j1=0;j1<6;j1++)
+	 {
+		 pom=4096;
+		 for(i1=0;i1<4;i1++)
+		 {
+			 if(pom>tmp[j1][i1])
+			 {
+				 pom=tmp[j1][i1];
+				 index[j1]=i1;
+			 }
+		 }
+		 dys1[j1]=pom;
+	 }
 
+	 //wyznaczanie dys 0 SSR
+	 for(j1=0;j1<6;j1++)
+	 {
+		 sum=0;
+		 for(i1=0;i1<4;i1++)
+		 {
+			 if(index[j1]!=i1)
+			 {
+				 sum+=tmp[j1][i1];
+			 }
+		 }
+		 dys0[j1]=sum/3;
+	 }
 
-//  	rotary_new(VELR,90000);
-//  	start=0;
+	 //treshe
+	 SR_Tresh=(dys1[1]-dys0[1]+dys1[3]-dys0[3])/2;
+	 SL_Tresh=(dys1[0]-dys0[0]+dys1[2]-dys0[2])/2;
+	 SF_Tresh=(dys1[4]-dys0[4]+dys1[5]-dys0[5])/2;
+
+	 SR_Tresh=SR_Tresh*7/10;
+	 SL_Tresh=SL_Tresh*7/10;
+	 SF_Tresh=SF_Tresh*7/10;
+
+	 SSR_Tresh=SR_Tresh*5/10;
+	 SSL_Tresh=SL_Tresh*5/10;
+
+ /***********************************************************************************/
+//	Treshe sa na sztywno w tym momencie
+//	 rotary(VELR,-95000);
+//	 HAL_Delay(2000);
+//	 dys0[4]=SensorTab[4];
+//	 dys0[5]=SensorTab[5];
+//
+//	 rotary(VELR,90000);
+//	 HAL_Delay(100);
+//	 if (SensorTab[4]-dys0[4] > SF_Tresh && SensorTab[5]-dys0[5] > SF_Tresh)
+//	 {
+//		 rotary(VELR,90000);
+//		 HAL_Delay(100);
+//	 }
+//
+//  	 for(i1=0;i1<4;i1++) dys0[i1]=SensorTab[i1];
+/**************************************************************************************/
 	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,0);
 }
 int32_t abs(int32_t a)

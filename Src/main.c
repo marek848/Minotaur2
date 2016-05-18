@@ -113,6 +113,12 @@ uint8_t column;
 
 int16_t X=0,Y=0,Z=0;
 
+//extern int32_t SSR_Tresh=-90;
+//extern int32_t SSL_Tresh=-90;
+//extern int32_t SR_Tresh=-150;
+//extern int32_t SL_Tresh=-150;
+//extern int32_t SF_Tresh=-140;
+
 /* USER CODE END 0 */
 
 int main(void)

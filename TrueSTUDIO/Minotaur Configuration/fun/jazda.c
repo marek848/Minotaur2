@@ -72,8 +72,44 @@ int32_t lef_back, rig_back, lef_fr, rig_fr, front_right,front_left;
 	 int le_back=SensorTab[0]-dys0[0];
 	 int ri_fr=SensorTab[3]-dys0[3];
 	 int ri_back=SensorTab[1]-dys0[1];
+	 int fr_le=SensorTab[4]-dys0[4];
+	 int fr_ri=SensorTab[5]-dys0[5];
 
-	 if (ri_fr>SR_Tresh && ri_back>SR_Tresh && abs(ri_fr-ri_back)<100 && abs(ri_fr-ri_back)>50)
+	 if (fr_le>SF_Tresh && fr_ri>SR_Tresh && abs(fr_ri-fr_le)<100 && abs(fr_ri-fr_le)>50)
+	 {
+		 fr_le=SensorTab[4]-dys0[4];
+		 fr_ri=SensorTab[5]-dys0[5];
+		 error3=fr_le-fr_ri;
+		 while(abs(error3)>2)
+		 {
+			 fr_le=SensorTab[4]-dys0[4];
+			 fr_ri=SensorTab[5]-dys0[5];
+
+			 error3=fr_le-fr_ri;
+			 if(error3<0)
+			 {
+				 HAL_GPIO_WritePin(AIN1_GPIO_Port,AIN1_Pin,1);
+				 HAL_GPIO_WritePin(AIN2_GPIO_Port,AIN2_Pin,0);
+				 HAL_GPIO_WritePin(BIN1_GPIO_Port,BIN1_Pin,0);
+				 HAL_GPIO_WritePin(BIN2_GPIO_Port,BIN2_Pin,1);
+			 }
+			 else
+			 {
+
+				HAL_GPIO_WritePin(AIN1_GPIO_Port,AIN1_Pin,0);
+				HAL_GPIO_WritePin(AIN2_GPIO_Port,AIN2_Pin,1);
+				HAL_GPIO_WritePin(BIN1_GPIO_Port,BIN1_Pin,1);
+				HAL_GPIO_WritePin(BIN2_GPIO_Port,BIN2_Pin,0);
+			 }
+
+			 if(error3<0) error3=error3*(-1);
+			 if(error3>power) error3=power;
+
+			 TIM1->CCR1=error3+100;
+			 TIM1->CCR2=error3+100;
+		 }
+	 }
+	 else if (ri_fr>SR_Tresh && ri_back>SR_Tresh && abs(ri_fr-ri_back)<100 && abs(ri_fr-ri_back)>50)
 	 {
 		 error3=ri_fr-ri_back;
 		 while(abs(error3)>2)
@@ -343,16 +379,16 @@ void readPath()
 void set()
 {
 	if (state-ori==1 || state-ori==-3) {
-		rotary(VELR,90000/*+angle/2*/);
 		align(VELR);
+		rotary(VELR,90000/*+angle/2*/);
 	}
 	else if (state-ori==2 || state-ori==-2) {
-		rotary(VELR,180000/*+angle/2*/);
 		align(VELR);
+		rotary(VELR,180000/*+angle/2*/);
 	}
 	else if (state-ori==3 || state-ori==-1) {
-		rotary(VELR,-95000/*+angle/2*/);
 		align(VELR);
+		rotary(VELR,-95000/*+angle/2*/);
 	}
 }
 /****************************************************/

@@ -13,7 +13,7 @@
 #define XMAZE 18
 #define YMAZE 18// Rozmiar labiryntu + 2
 #define ORI_START 1
-#define VEL 250
+#define VEL 300
 #define VELR 700
 #define TARGET_1 8
 #define TARGET_2 9
@@ -27,9 +27,9 @@
 //#define I_drive 1/2000
 //#define D_drive 300
 
-#define K_drive 3/2
+#define K_drive 4/2
 #define I_drive 0
-#define D_drive 0
+#define D_drive 1/10
 
 #include "stm32f1xx_hal.h"
 
@@ -82,8 +82,8 @@ int32_t regulator;
 #define KATNAST 100
 #define WALLSOFF 0
 #define DISTANCE 159000 // rozmiar kom�rki
-#define SSR_Tresh -100
-#define SSL_Tresh -100
+#define SSR_Tresh -90
+#define SSL_Tresh -90
 #define SR_Tresh -150
 #define SL_Tresh -150
 #define SF_Tresh -140

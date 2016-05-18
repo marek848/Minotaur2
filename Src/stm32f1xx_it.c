@@ -185,6 +185,7 @@ void TIM4_IRQHandler(void)
   /* USER CODE BEGIN TIM4_IRQn 0 */
 	static uint8_t count=0;
 	int i;
+	int factor;
 	static int32_t rate[3]={0,0,0},prev_rate=0,tmp_rate[2],prev_vel=0;
 
 	indexer=count%4;
@@ -258,7 +259,8 @@ void TIM4_IRQHandler(void)
 		}
 		else error=-angle1/30;
 
-		propocjonal=error*K_drive;
+		factor=VEL/100;
+		propocjonal=K_drive*error*factor/3;
 
 		integral+=error*I_drive;
 		if (integral>200) integral=100;

@@ -404,7 +404,16 @@ void rstdrive()
         flood();
 	findPath();
 	Status=STOP_STATUS;
-//	while (Status==STOP_STATUS) HAL_Delay(50);
+	while (Status==STOP_STATUS)
+		{
+			if (HAL_GPIO_ReadPin(BUT2_GPIO_Port,BUT2_Pin)==0)
+				{
+					HAL_Delay(1000);
+					VEL+=100;
+					Status=DRIVE_STATUS;
+				}
+			HAL_Delay(50);
+		}
 
 //	for(i1=0;i1<4;i1++) dys0[i1]=SensorTab[i1];
 	HAL_Delay(1000);

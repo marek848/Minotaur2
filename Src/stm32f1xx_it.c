@@ -247,15 +247,18 @@ void TIM4_IRQHandler(void)
 
 		if (ri_back>SSR_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<100 && abs(ri_fr-ri_back)<abs(SSR_Tresh))
 		{
-			error=(ri_back - le_back)*2/2 - angle1/90;
+			error=(ri_back - le_back)*5/2 - angle1/30;
+			//error=(ri_back - le_back)*1/8 - angle1/90;
 		}
 		else if (le_fr>SSL_Tresh &&  le_back>SSL_Tresh && abs(le_fr-le_back)<abs(SSL_Tresh))
 		{
-			error=(le_back-le_fr)/4 - le_back*3/2 - angle1/90;
+			error=(le_back-le_fr)*0 - le_back*5/2 - angle1/30;
+			//error=(le_back-le_fr)/16 - le_back/8 - angle1/90;
 		}
 		else if(ri_fr>SSR_Tresh && ri_back>SSR_Tresh && abs(ri_fr-ri_back)<abs(SSR_Tresh))
 		{
-			error= (ri_fr-ri_back)/4 + ri_back*3/2 - angle1/90;
+			error= (ri_fr-ri_back)*0 + ri_back*5/2 - angle1/30;
+			// error= (ri_fr-ri_back)/16 + ri_back/8 - angle1/90;
 		}
 		else error=-angle1/30;
 

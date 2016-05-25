@@ -75,8 +75,11 @@ int32_t lef_back, rig_back, lef_fr, rig_fr, front_right,front_left;
 	 int fr_le=SensorTab[4]-dys0[4];
 	 int fr_ri=SensorTab[5]-dys0[5];
 
-	 if (fr_le>SF_Tresh && fr_ri>SR_Tresh && abs(fr_ri-fr_le)<100 && abs(fr_ri-fr_le)>50)
+	 if (fr_le>SF_Tresh && fr_ri>SR_Tresh && abs(fr_ri-fr_le)<120 && abs(fr_ri-fr_le)>70)
 	 {
+		 TIM1->CCR1=0;
+		 TIM1->CCR2=0;
+		 HAL_Delay(100);
 		 fr_le=SensorTab[4]-dys0[4];
 		 fr_ri=SensorTab[5]-dys0[5];
 		 error3=fr_le-fr_ri;
@@ -108,7 +111,11 @@ int32_t lef_back, rig_back, lef_fr, rig_fr, front_right,front_left;
 			 TIM1->CCR1=error3+100;
 			 TIM1->CCR2=error3+100;
 		 }
+		 TIM1->CCR1=0;
+		 TIM1->CCR2=0;
+		 HAL_Delay(100);
 	 }
+	 /*
 	 else if (ri_fr>SR_Tresh && ri_back>SR_Tresh && abs(ri_fr-ri_back)<100 && abs(ri_fr-ri_back)>50)
 	 {
 		 error3=ri_fr-ri_back;
@@ -175,11 +182,13 @@ int32_t lef_back, rig_back, lef_fr, rig_fr, front_right,front_left;
 			 TIM1->CCR2=error3+100;
 		 }
 	 }
+	 */
 	 TIM1->CCR1=0;
 	 TIM1->CCR2=0;
 
 	 angle=0;
 	 angle1=0;
+
  }
 
 /**************************************************************/
@@ -602,11 +611,12 @@ void calibration()
 	 //dokonywanie pomiarow
 	 for(i1=0;i1<4;i1++)
 	 {
+		 HAL_Delay(250);
 		 for(j1=0;j1<6;j1++)
 		 {
 			 tmp[j1][i1]=SensorTab[j1];
 		 }
-		 HAL_Delay(100);
+		 HAL_Delay(250);
 		 rotary(VELR,-95000);
 	 }
 
@@ -644,12 +654,12 @@ void calibration()
 	 SL_Tresh=(dys1[0]-dys0[0]+dys1[2]-dys0[2])/2;
 	 SF_Tresh=(dys1[4]-dys0[4]+dys1[5]-dys0[5])/2;
 
-	 SR_Tresh=SR_Tresh*7/10;
-	 SL_Tresh=SL_Tresh*7/10;
-	 SF_Tresh=SF_Tresh*7/10;
+	 SR_Tresh=SR_Tresh*75/100;
+	 SL_Tresh=SL_Tresh*75/100;
+	 SF_Tresh=SF_Tresh*75/100;
 
-	 SSR_Tresh=SR_Tresh*5/10;
-	 SSL_Tresh=SL_Tresh*5/10;
+	 SSR_Tresh=SR_Tresh*8/10;
+	 SSL_Tresh=SL_Tresh*8/10;
 
  /***********************************************************************************/
 //	Treshe sa na sztywno w tym momencie
